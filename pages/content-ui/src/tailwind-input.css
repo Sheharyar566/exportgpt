@@ -1,3 +1,58 @@
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+/*!
+  Theme: Default
+  Description: Original highlight.js style
+  Author: (c) Ivan Sagalaev <maniac@softwaremaniacs.org>
+  Maintainer: @highlightjs/core-team
+  Website: https://highlightjs.org/
+  License: see project LICENSE
+  Touched: 2021
+*/
+
+/*
+This is left on purpose making default.css the single file that can be lifted
+as-is from the repository directly without the need for a build step
+
+Typically this "required" baseline CSS is added by `makestuff.js` during build.
+*/
+pre code.hljs {
+  display: block;
+  overflow-x: auto;
+  padding: 1em;
+}
+
+.message {
+  @apply my-[18px] flex flex-col gap-2;
+}
+
+.message[message-type='sent'] {
+  @apply bg-[#2f2f2f] rounded-3xl px-5 py-2.5 max-w-[80%] self-end break-words;
+}
+
+.message[message-type='sent'] p {
+  @apply min-h-5;
+}
+
+.message h3 {
+  @apply text-xl font-bold mt-2;
+}
+
+.message code {
+  @apply bg-[#0d0d0d] p-4 rounded-lg;
+}
+
+.message strong > code,
+.message code:not(.hljs) {
+  @apply bg-[#424242] p-0 px-2 rounded-md;
+}
+
+.message ol {
+  @apply list-decimal pl-4;
+}
+
+.message ul {
+  @apply list-disc pl-4;
+}

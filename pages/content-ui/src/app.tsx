@@ -1,23 +1,29 @@
-import { useEffect } from 'react';
-import { Button } from '@extension/ui';
-import { useStorageSuspense } from '@extension/shared';
-import { exampleThemeStorage } from '@extension/storage';
+import { useState } from 'react';
+import Header from './header';
+import Messages from './messages';
+import ModalWrapper from './wrapper';
+import Footer from './footer';
 
 export default function App() {
-  const theme = useStorageSuspense(exampleThemeStorage);
-
-  useEffect(() => {
-    console.log('content ui loaded');
-  }, []);
+  const [isModalOpen, setIsModalOpen] = useState<boolean>(false);
 
   return (
-    <div className="flex items-center justify-between gap-2 bg-blue-100 rounded py-1 px-2">
-      <div className="flex gap-1 text-blue-500">
-        Edit <strong className="text-blue-700">pages/content-ui/src/app.tsx</strong> and save to reload.
+    <div className="wrapper">
+      <div className="absolute right-0 top-[20%]">
+        <button
+          className="rounded-l-lg bg-indigo-900 text-white w-[100px] h-[50px] grid place-items-center font-bold"
+          onClick={() => setIsModalOpen(true)}>
+          Export
+        </button>
       </div>
-      <Button theme={theme} onClick={exampleThemeStorage.toggle}>
-        Toggle Theme
-      </Button>
+
+      {isModalOpen && (
+        <ModalWrapper>
+          <Header onClose={() => setIsModalOpen(false)} />
+          <Messages />
+          <Footer />
+        </ModalWrapper>
+      )}
     </div>
   );
 }
