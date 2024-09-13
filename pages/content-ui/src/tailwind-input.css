@@ -36,6 +36,10 @@ pre code.hljs {
   @apply min-h-5;
 }
 
+.message img {
+  @apply rounded-2xl;
+}
+
 .message h3 {
   @apply text-xl font-bold mt-2;
 }

@@ -1,7 +1,7 @@
 import parse, { Node, NodeType } from 'node-html-parser';
-import sanitize from 'sanitize-html';
-import { Document, Font, Page, pdf, PDFDownloadLink, StyleSheet, Text, View } from '@react-pdf/renderer';
+import { Document, Font, Page, PDFDownloadLink, StyleSheet, Text, View } from '@react-pdf/renderer';
 import { ReactElement, useState } from 'react';
+import { getMessages } from '@src/utils/getMessages';
 
 Font.registerHyphenationCallback(word => [word]);
 
@@ -32,7 +32,7 @@ const baseStyles = StyleSheet.create({
     borderRadius: 12 * 0.75,
     paddingHorizontal: 20 * 0.75,
     paddingVertical: 10 * 0.75,
-    width: '80%',
+    maxWidth: '80%',
     alignSelf: 'flex-end',
   },
   codeBlock: {
@@ -60,27 +60,17 @@ const Footer = () => {
   const [doc, setDoc] = useState<ReactElement>();
 
   const exportToPdf = async () => {
-    const messages = Array.from(document.querySelectorAll('article [data-message-id]')).map(article => {
-      const messageType = article.getAttribute('data-message-author-role') === 'user' ? 'sent' : 'received';
+    const messages = getMessages(false, true);
 
-      const id = article.getAttribute('data-message-id');
-
-      let textSanitized = sanitize(article.outerHTML, {
-        disallowedTagsMode: 'discard',
-        allowedTags: ['article', 'p', 'h3', 'ol', 'ul', 'li', 'code', 'span', 'strong', 'img', 'pre'],
-      });
-
-      const parsed = parse(textSanitized, {
+    for (const message of messages) {
+      message.content = parse(message.text, {
         lowerCaseTagName: true,
         blockTextElements: {},
       });
+    }
 
-      return {
-        id,
-        content: parsed,
-        type: messageType,
-      };
-    });
+    debugger;
+    console.log(generateitem(messages[1].content!, [], 0));
 
     const myDocument = (
       <Document>
@@ -90,7 +80,7 @@ const Footer = () => {
               <View
                 key={message.id}
                 style={[baseStyles.message, message.type === 'sent' ? baseStyles.sentMessage : {}]}>
-                {generateitem(message.content, [], 0)}
+                {generateitem(message.content!, [], 0)}
               </View>
             ))}
           </View>
@@ -130,7 +120,7 @@ const Footer = () => {
     ) : (
       <Text style={[baseStyles.text, styles]}>
         {node.rawTagName === 'li' && `${index + 1}. `}
-        {node.nodeType !== NodeType.TEXT_NODE ? getChildren() : node.textContent}
+        {node.nodeType !== NodeType.TEXT_NODE ? getChildren() : node.textContent.replace(/(^\s+|\s+$)/gm, '\u00A0')}
       </Text>
     );
   };

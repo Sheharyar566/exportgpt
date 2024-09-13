@@ -34,7 +34,7 @@ const manifest = deepmerge(
     },
     content_scripts: [
       {
-        matches: ['https://chatgpt.com/c/*'],
+        matches: ['https://chatgpt.com/c/*', 'https://chatgpt.com/g/*'],
         js: ['content-ui/index.iife.js'],
       },
     ],
