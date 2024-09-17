@@ -40,6 +40,10 @@ pre code.hljs {
   @apply rounded-2xl;
 }
 
+.message hr {
+  @apply h-[1px] my-10;
+}
+
 .message h3 {
   @apply text-xl font-bold mt-2;
 }

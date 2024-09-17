@@ -1,7 +1,8 @@
 import parse, { Node, NodeType } from 'node-html-parser';
-import { Document, Font, Page, PDFDownloadLink, StyleSheet, Text, View } from '@react-pdf/renderer';
+import { Document, Font, Image, Link, Page, PDFDownloadLink, StyleSheet, Text, View } from '@react-pdf/renderer';
 import { ReactElement, useState } from 'react';
 import { getMessages } from '@src/utils/getMessages';
+import { getImage } from '@src/utils/getImage';
 
 Font.registerHyphenationCallback(word => [word]);
 
@@ -14,12 +15,23 @@ const baseStyles = StyleSheet.create({
   text: {
     fontSize: 16 * 0.75,
     lineHeight: 1.25,
+    minHeight: 24 * 0.75,
+  },
+  bold: {
+    fontFamily: 'Helvetica-Bold',
+    fontSize: 16 * 0.75,
+    fontWeight: 'bold',
   },
   h3: {
     fontFamily: 'Helvetica-Bold',
     fontSize: 24 * 0.75,
     fontWeight: 'bold',
     marginTop: 8 * 0.75,
+  },
+  hr: {
+    height: 1,
+    backgroundColor: '#999999',
+    marginVertical: 40 / 0.75,
   },
   message: {
     marginVertical: 18 * 0.75,
@@ -41,6 +53,15 @@ const baseStyles = StyleSheet.create({
     borderRadius: 8 * 0.75,
     overflow: 'hidden',
   },
+  link: {
+    textDecoration: 'underline',
+    color: '#0099ff',
+    textDecorationColor: '#0099ff',
+  },
+  image: {
+    maxWidth: 1024,
+    maxHeight: 1024,
+  },
   inlineCode: {
     backgroundColor: '#424242',
     paddingVertical: 0,
@@ -60,30 +81,26 @@ const Footer = () => {
   const [doc, setDoc] = useState<ReactElement>();
 
   const exportToPdf = async () => {
-    const messages = getMessages(false, true);
+    const messages = getMessages(false);
+    let elements: JSX.Element[] = [];
 
     for (const message of messages) {
       message.content = parse(message.text, {
         lowerCaseTagName: true,
         blockTextElements: {},
       });
-    }
 
-    debugger;
-    console.log(generateitem(messages[1].content!, [], 0));
+      elements.push(
+        <View key={message.id} style={[baseStyles.message, message.type === 'sent' ? baseStyles.sentMessage : {}]}>
+          {await generateitem(message.content!, [], 0)}
+        </View>,
+      );
+    }
 
     const myDocument = (
       <Document>
         <Page size="A4" style={baseStyles.body}>
-          <View>
-            {messages.map(message => (
-              <View
-                key={message.id}
-                style={[baseStyles.message, message.type === 'sent' ? baseStyles.sentMessage : {}]}>
-                {generateitem(message.content!, [], 0)}
-              </View>
-            ))}
-          </View>
+          <View>{elements.map(item => item)}</View>
         </Page>
       </Document>
     );
@@ -91,7 +108,17 @@ const Footer = () => {
     setDoc(myDocument);
   };
 
-  const generateitem = (node: Node, parents: string[], index: number): JSX.Element => {
+  const getChildren = async (node: Node, parents: string[], index: number) => {
+    const items = [];
+
+    for (const [i, childNode] of node.childNodes.entries()) {
+      items.push(await generateitem(childNode, node.rawTagName ? [...parents, node.rawTagName] : parents, index));
+    }
+
+    return items;
+  };
+
+  const generateitem = async (node: Node, parents: string[], index: number): Promise<JSX.Element | string> => {
     const isBlockElement = ['pre', 'ol', 'ul', null].includes(node.rawTagName);
 
     let styles = {};
@@ -106,23 +133,44 @@ const Footer = () => {
       styles = baseStyles.h3;
     } else if (node.rawTagName === 'ul' || node.rawTagName === 'ol') {
       styles = baseStyles.list;
+    } else if (node.rawTagName === 'strong') {
+      styles = baseStyles.bold;
     }
 
-    const getChildren = () =>
-      node.childNodes.map((childNode, index) =>
-        generateitem(childNode, node.rawTagName ? [...parents, node.rawTagName] : parents, index),
-      );
+    if (
+      node.rawTagName === null
+      // (node.childNodes.length === 1 && node.childNodes[0].nodeType !== NodeType.TEXT_NODE)
+    ) {
+      return <>{await getChildren(node, parents, index)}</>;
+    } else if (node.rawTagName === 'hr') {
+      return <View style={baseStyles.hr} />;
+    } else if (node.rawTagName === 'br') {
+      return <Text style={baseStyles.text}>{'\n'}</Text>;
+    } else if (node.rawTagName === 'a') {
+      const link = (node as Node & { attributes: { href: string } }).attributes.href;
 
-    return node.rawTagName === null ? (
-      <>{getChildren()}</>
-    ) : isBlockElement ? (
-      <View style={styles}>{getChildren()}</View>
-    ) : (
-      <Text style={[baseStyles.text, styles]}>
-        {node.rawTagName === 'li' && `${index + 1}. `}
-        {node.nodeType !== NodeType.TEXT_NODE ? getChildren() : node.textContent.replace(/(^\s+|\s+$)/gm, '\u00A0')}
-      </Text>
-    );
+      return (
+        <Link href={link} style={baseStyles.link}>
+          {await getChildren(node, parents, index)}
+        </Link>
+      );
+    } else if (node.rawTagName === 'img') {
+      const src = (node as Node & { attributes: { src: string } }).attributes.src;
+
+      const resizedImage = await getImage(src);
+      return <Image src={resizedImage} style={baseStyles.image} />;
+    } else if (isBlockElement) {
+      return <View style={styles}>{await getChildren(node, parents, index)}</View>;
+    } else {
+      return (
+        <Text style={[baseStyles.text, styles]}>
+          {node.rawTagName === 'li' && (parents.includes('ul') ? `\u2022 ` : `${index + 1}. `)}
+          {node.nodeType !== NodeType.TEXT_NODE
+            ? await getChildren(node, parents, index)
+            : node.textContent.replace(/(^\s+|\s+$)/gm, '\u00A0')}
+        </Text>
+      );
+    }
   };
 
   return (
