@@ -15,7 +15,6 @@ const baseStyles = StyleSheet.create({
   text: {
     fontSize: 16 * 0.75,
     lineHeight: 1.25,
-    minHeight: 24 * 0.75,
   },
   bold: {
     fontFamily: 'Helvetica-Bold',
@@ -162,12 +161,14 @@ const Footer = () => {
     } else if (isBlockElement) {
       return <View style={styles}>{await getChildren(node, parents, index)}</View>;
     } else {
+      const isText = node.nodeType === NodeType.TEXT_NODE;
+      const isInsidePre = parents.includes('pre');
+      const spaceCount = isText && isInsidePre ? (node.textContent.match(/^\s+/)?.[0].length ?? 0) * 5 : 0;
+
       return (
-        <Text style={[baseStyles.text, styles]}>
+        <Text style={[baseStyles.text, styles, { textIndent: spaceCount }]}>
           {node.rawTagName === 'li' && (parents.includes('ul') ? `\u2022 ` : `${index + 1}. `)}
-          {node.nodeType !== NodeType.TEXT_NODE
-            ? await getChildren(node, parents, index)
-            : node.textContent.replace(/(^\s+|\s+$)/gm, '\u00A0')}
+          {node.nodeType !== NodeType.TEXT_NODE ? await getChildren(node, parents, index) : node.textContent}
         </Text>
       );
     }

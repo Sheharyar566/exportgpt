@@ -30,9 +30,7 @@ export const getMessages = (replaceLineBreaks: boolean = false) => {
       },
     });
 
-    if (messageType === 'sent' && replaceLineBreaks) {
-      textSanitized = textSanitized.split('\n').join('<br>');
-    }
+    textSanitized = textSanitized.split('\n').join('<br>');
 
     messages.push({
       id,
