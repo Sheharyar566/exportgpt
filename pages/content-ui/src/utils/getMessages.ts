@@ -1,7 +1,7 @@
-import { IMessage } from '@src/types';
+import type { IMessage } from '@src/types';
 import sanitize from 'sanitize-html';
 
-export const getMessages = (replaceLineBreaks: boolean = false) => {
+export const getMessages = () => {
   const messages: IMessage[] = [];
 
   document.querySelectorAll('article [data-message-id]').forEach(rawArticle => {

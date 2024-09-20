@@ -1,6 +1,19 @@
-import parse, { Node, NodeType } from 'node-html-parser';
-import { Document, Font, Image, Link, Page, PDFDownloadLink, StyleSheet, Text, View } from '@react-pdf/renderer';
-import { ReactElement, useState } from 'react';
+import type { Node } from 'node-html-parser';
+import parse, { NodeType } from 'node-html-parser';
+import {
+  Canvas,
+  Document,
+  Font,
+  Image,
+  Link,
+  Page,
+  PDFDownloadLink,
+  StyleSheet,
+  Text,
+  View,
+} from '@react-pdf/renderer';
+import type { ReactElement } from 'react';
+import { useState } from 'react';
 import { getMessages } from '@src/utils/getMessages';
 import { getImage } from '@src/utils/getImage';
 
@@ -58,8 +71,8 @@ const baseStyles = StyleSheet.create({
     textDecorationColor: '#0099ff',
   },
   image: {
-    maxWidth: 1024,
-    maxHeight: 1024,
+    width: 250,
+    height: 250,
   },
   inlineCode: {
     backgroundColor: '#424242',
@@ -80,7 +93,7 @@ const Footer = () => {
   const [doc, setDoc] = useState<ReactElement>();
 
   const exportToPdf = async () => {
-    const messages = getMessages(false);
+    const messages = getMessages();
     let elements: JSX.Element[] = [];
 
     for (const message of messages) {
@@ -98,7 +111,7 @@ const Footer = () => {
 
     const myDocument = (
       <Document>
-        <Page size="A4" style={baseStyles.body}>
+        <Page size="A3" style={baseStyles.body}>
           <View>{elements.map(item => item)}</View>
         </Page>
       </Document>
@@ -110,7 +123,7 @@ const Footer = () => {
   const getChildren = async (node: Node, parents: string[], index: number) => {
     const items = [];
 
-    for (const [i, childNode] of node.childNodes.entries()) {
+    for (const [, childNode] of node.childNodes.entries()) {
       items.push(await generateitem(childNode, node.rawTagName ? [...parents, node.rawTagName] : parents, index));
     }
 
